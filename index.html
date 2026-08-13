@@ -90,6 +90,9 @@ details[open]{
     background:var(--input);
     outline:none;
 }
+.form-item.full{
+    grid-column: span 2;
+}
 .result-box{
     background:var(--card);
     border:1px solid var(--card-border);
@@ -166,7 +169,7 @@ button{
     </div>
 </div>
 <div class="btn-row">
-    <button class="btn-calc" id="btnCalc">计算播报</button>
+    <button class="btn-calc" id="btnCalc">计算并播报</button>
     <button class="btn-clear" id="btnClear">清空</button>
 </div>
 <div class="result-box" id="resultBox" style="display:none;">
@@ -175,9 +178,9 @@ button{
     <div class="perkm-text" id="perKmDisplay">每公里净赚：0.00元</div>
     <div class="tip-text tip-good" id="tipDisplay">--</div>
 </div>
-<!-- 高级参数，默认折叠：油耗、油价、高速费、接单底价 -->
+<!-- 高级参数，默认折叠 -->
 <details>
-    <summary>⚙️高级参数（油耗/油价/底价）</summary>
+    <summary>⚙️高级参数（油耗/油价/底价/语音测试）</summary>
     <div class="form-grid">
         <div class="form-item">
             <label>油耗 L/100km</label>
@@ -199,103 +202,133 @@ button{
             <label>接单底价元/km</label>
             <input type="number" step="0.1" id="basePrice" value="1.0">
         </div>
+        <div class="form-item full">
+            <button style="width:100%;background:#1e40af;color:#fff;" id="btnTestVoice">🔊 测试语音播报</button>
+        </div>
     </div>
 </details>
 <script>
 const EMPTY_OIL_RATE = 16;
 const cacheKeys = ['oilUse','oilPrice','roadPrice','basePrice','mainKm','mainMoney','emptyKm','emptyHigh'];
+// ========== 语音播报兼容修复：适配华为/安卓系统 ==========
+var supportSpeak = 'speechSynthesis' in window;
+var voiceList = [];
+// 预加载语音音色列表
+function loadVoiceList(){
+    if(!supportSpeak) return;
+    voiceList = window.speechSynthesis.getVoices();
+}
+if(supportSpeak){
+    loadVoiceList();
+    window.speechSynthesis.onvoiceschanged = loadVoiceList;
+}
+// 金额格式化
 function formatMoney(n){
     if(isNaN(n)) return "0.00";
     return Number(n).toFixed(2);
 }
+// 读取输入数值，非法值归零
 function getNum(id){
-    const v = parseFloat(document.getElementById(id).value);
+    var v = parseFloat(document.getElementById(id).value);
     return isNaN(v)||v<0 ? 0 : v;
 }
+// 本地存储缓存全部参数
 function saveCache(){
     try{
-        const data = {};
-        cacheKeys.forEach(k=>{
-            const el = document.getElementById(k);
+        var data = {};
+        cacheKeys.forEach(function(k){
+            var el = document.getElementById(k);
             if(el) data[k]=el.value;
         });
         localStorage.setItem("truckCalcMini",JSON.stringify(data));
     }catch(e){}
 }
+// 页面加载读取缓存回填
 function loadCache(){
     try{
-        const d = JSON.parse(localStorage.getItem("truckCalcMini")||"{}");
-        cacheKeys.forEach(k=>{
-            const el = document.getElementById(k);
+        var d = JSON.parse(localStorage.getItem("truckCalcMini")||"{}");
+        cacheKeys.forEach(function(k){
+            var el = document.getElementById(k);
             if(d[k]!==undefined && el) el.value = d[k];
         })
     }catch(e){}
 }
-//语音播报结果
+// 语音播报函数
 function speakResult(profit,perKm,isOk){
-    if(!window.speechSynthesis) return;
+    if(!supportSpeak){
+        alert("当前浏览器不支持语音播报功能，请使用华为自带浏览器或Chrome");
+        return;
+    }
     window.speechSynthesis.cancel();
-    const roundProfit = Math.round(profit);
-    let text = `单趟净赚${roundProfit}元，每公里净赚${perKm.toFixed(1)}元。`;
-    text += isOk ? "符合标准，可以承接。":"低于底价，不建议承接。";
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang="zh-CN";
-    utter.rate=1.1;
-    utter.volume=1;
+    var roundProfit = Math.round(profit);
+    var text = "单趟净赚" + roundProfit + "元，每公里净赚" + perKm.toFixed(1) + "元。";
+    text += isOk ? "符合标准，可以承接。" : "低于底价，不建议承接。";
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "zh-CN";
+    utter.rate = 1.0;
+    utter.volume = 1.0;
+    // 匹配中文语音解决安卓播报乱码/无声
+    var zhVoice = voiceList.find(function(v){
+        return v.lang.toLowerCase().includes('zh') || v.lang.includes('CN');
+    });
+    if(zhVoice) utter.voice = zhVoice;
+    utter.onerror = function(e){
+        console.log("播报错误:", e);
+        alert("播报失败，请检查手机文字转语音设置，或部署到HTTPS网页后使用");
+    };
     window.speechSynthesis.speak(utter);
 }
-//解析文本框口述文字，提取里程、运费、放空
+// 解析文本框口述文字提取里程、运费、放空
 function parseInputText(text){
     if(!text) return;
-    const nums = text.match(/\d+(\.\d+)?/g);
+    var nums = text.match(/\d+(\.\d+)?/g);
     if(!nums) return;
-    const arrNum = nums.map(Number);
-    let km=null,money=null,empty=null;
-    const kmMatch = text.match(/(\d+(\.\d+)?)[公里|km|千米]/);
-    const moneyMatch = text.match(/运费[^\d]*(\d+(\.\d+)?)/);
-    const emptyMatch = text.match(/放空[^\d]*(\d+(\.\d+)?)/);
+    var arrNum = nums.map(Number);
+    var km=null,money=null,empty=null;
+    var kmMatch = text.match(/(\d+(\.\d+)?)[公里|km|千米]/);
+    var moneyMatch = text.match(/运费[^\d]*(\d+(\.\d+)?)/);
+    var emptyMatch = text.match(/放空[^\d]*(\d+(\.\d+)?)/);
     if(kmMatch) km=Number(kmMatch[1]);
-    if(moneyMatch) money=Number(moneyMatch[1]);
+    if(moneyMatch) money=Number(kmMatch[1]);
     if(emptyMatch) empty=Number(emptyMatch[1]);
-    const remain = arrNum.filter(n=>n!==km&&n!==money&&n!==empty);
-    if(km===null&&remain.length>0) km=remain.shift();
-    if(money===null&&remain.length>0) money=remain.shift();
-    if(empty===null&&remain.length>0) empty=remain.shift();
+    var remain = arrNum.filter(function(n){ return n!==km && n!==money && n!==empty; });
+    if(km===null && remain.length>0) km=remain.shift();
+    if(money===null && remain.length>0) money=remain.shift();
+    if(empty===null && remain.length>0) empty=remain.shift();
     if(km!==null) document.getElementById("mainKm").value=km;
     if(money!==null) document.getElementById("mainMoney").value=money;
     if(empty!==null) document.getElementById("emptyKm").value=empty;
     saveCache();
 }
-//核心成本计算
+// 核心成本计算
 function calculate(){
-    const oilUse = Number(document.getElementById("oilUse").value);
-    const oilPrice = getNum("oilPrice");
-    const roadPrice = getNum("roadPrice");
-    const basePrice = getNum("basePrice");
-    const mainKm = getNum("mainKm");
-    const mainMoney = getNum("mainMoney");
-    const emptyKm = getNum("emptyKm");
-    const emptyHigh = getNum("emptyHigh");
-    //载货油费+高速费
-    const mainOil = mainKm * oilUse /100 * oilPrice;
-    const mainRoad = mainKm * roadPrice;
-    //放空油费+高速费
-    const emptyOil = emptyKm * EMPTY_OIL_RATE /100 * oilPrice;
-    const emptyRoad = emptyHigh * roadPrice;
-    const totalCost = mainOil + mainRoad + emptyOil + emptyRoad;
-    const profit = mainMoney - totalCost;
-    const totalKm = mainKm + emptyKm;
-    const perKm = totalKm>0 ? profit/totalKm : 0;
-    //对比接单底价
-    const isOk = perKm >= basePrice;
-    //渲染结果面板
-    const resBox = document.getElementById("resultBox");
+    var oilUse = Number(document.getElementById("oilUse").value);
+    var oilPrice = getNum("oilPrice");
+    var roadPrice = getNum("roadPrice");
+    var basePrice = getNum("basePrice");
+    var mainKm = getNum("mainKm");
+    var mainMoney = getNum("mainMoney");
+    var emptyKm = getNum("emptyKm");
+    var emptyHigh = getNum("emptyHigh");
+    // 载货成本
+    var mainOil = mainKm * oilUse /100 * oilPrice;
+    var mainRoad = mainKm * roadPrice;
+    // 放空成本
+    var emptyOil = emptyKm * EMPTY_OIL_RATE /100 * oilPrice;
+    var emptyRoad = emptyHigh * roadPrice;
+    var totalCost = mainOil + mainRoad + emptyOil + emptyRoad;
+    var profit = mainMoney - totalCost;
+    var totalKm = mainKm + emptyKm;
+    var perKm = totalKm>0 ? profit/totalKm : 0;
+    var isOk = perKm >= basePrice;
+    // 渲染结果面板
+    var resBox = document.getElementById("resultBox");
     resBox.style.display="block";
-    const profitDom = document.getElementById("profitDisplay");
+    var profitDom = document.getElementById("profitDisplay");
     profitDom.innerText = formatMoney(profit);
     profitDom.className = "profit-num" + (profit<0?" bad":"");
-    document.getElementById("perKmDisplay").innerText = `每公里净赚：${formatMoney(perKm)}元`;
-    const tipDom = document.getElementById("tipDisplay");
+    document.getElementById("perKmDisplay").innerText = "每公里净赚："+formatMoney(perKm)+"元";
+    var tipDom = document.getElementById("tipDisplay");
     if(profit>=0 && isOk){
         tipDom.className="tip-text tip-good";
         tipDom.innerText="✅符合接单标准，可以接";
@@ -307,34 +340,41 @@ function calculate(){
         tipDom.innerText="❌亏本，不要接";
     }
     saveCache();
-    speakResult(profit,perKm,isOk);
+    return { profit:profit, perKm:perKm, isOk:isOk };
 }
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',function(){
     loadCache();
-    const textArea = document.getElementById("voiceTextArea");
-    //文本框失去焦点自动解析+计算播报
-    textArea.addEventListener("blur",()=>{
+    var textArea = document.getElementById("voiceTextArea");
+    // 文本框失焦：仅解析+计算，不播报（规避浏览器自动语音拦截）
+    textArea.addEventListener("blur",function(){
         parseInputText(textArea.value.trim());
         calculate();
     });
-    //计算按钮
-    document.getElementById("btnCalc").onclick = calculate;
-    //清空按钮
-    document.getElementById("btnClear").onclick = ()=>{
+    // 手动点击计算按钮：计算+语音播报（用户主动交互，无拦截）
+    document.getElementById("btnCalc").onclick = function(){
+        var res = calculate();
+        speakResult(res.profit, res.perKm, res.isOk);
+    };
+    // 语音播报测试按钮
+    document.getElementById("btnTestVoice").onclick = function(){
+        speakResult(1000, 1.2, true);
+    };
+    // 清空按钮
+    document.getElementById("btnClear").onclick = function(){
         textArea.value="";
         document.getElementById("mainKm").value="";
-        document.getElementById("emptyKm").value="";
         document.getElementById("mainMoney").value="";
+        document.getElementById("emptyKm").value="";
         document.getElementById("emptyHigh").value="";
         document.getElementById("resultBox").style.display="none";
-        if(window.speechSynthesis) window.speechSynthesis.cancel();
+        if(supportSpeak) window.speechSynthesis.cancel();
         saveCache();
-    }
-    //手动修改货源参数自动本地存储
-    document.querySelectorAll("#mainKm,#mainMoney,#emptyKm,#emptyHigh").forEach(el=>{
+    };
+    // 所有输入框修改自动缓存
+    document.querySelectorAll("#mainKm,#mainMoney,#emptyKm,#emptyHigh,#oilUse,#oilPrice,#roadPrice,#basePrice").forEach(function(el){
         el.addEventListener("change",saveCache);
-    })
-})
+    });
+});
 </script>
 </body>
 </html>
