@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>货运成本速算</title>
+<style>
+:root{
+    --bg:#050b18;
+    --card:#0f172a;
+    --card-border:rgba(255,255,255,0.08);
+    --text:#e2e8f0;
+    --text-sub:#94a3b8;
+    --input:#1e293b;
+    --input-border:rgba(255,255,255,0.08);
+    --input-focus:#38bdf8;
+    --primary:#3b82f6;
+    --success:#34d399;
+    --danger:#f87171;
+    --divider:rgba(255,255,255,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif;}
+html,body{
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+body{
+    color:var(--text);
+    background:var(--bg);
+    padding:10px;
+    min-width:280px;
+}
+.num-font{font-family:"SF Mono",Consolas,monospace;}
+.head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+.head h1{font-size:15px;font-weight:800;}
+.clear-btn{
+    font-size:11px;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid rgba(248,113,113,0.2);
+    background:rgba(248,113,113,0.08);
+    color:var(--danger);
+    cursor:pointer;
+}
+.card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:12px;
+    padding:10px;
+    margin-bottom:10px;
+}
+.card-title{
+    font-size:12px;
+    color:var(--text-sub);
+    font-weight:700;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+.card-title::before{
+    content:"";
+    width:3px;
+    height:12px;
+    border-radius:2px;
+    background:var(--primary);
+}
+.voice-btn{
+    width:100%;
+    height:40px;
+    border-radius:10px;
+    border:1px solid rgba(56,189,248,0.3);
+    background:rgba(56,189,248,0.1);
+    color:#7dd3fc;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+}
+.voice-btn.recording{
+    background:rgba(248,113,113,0.15);
+    border-color:rgba(248,113,113,0.3);
+    color:var(--danger);
+    animation: pulse 1.2s infinite;
+}
+.voice-tip{
+    font-size:11px;
+    color:var(--text-sub);
+    text-align:center;
+    margin-bottom:8px;
+    display:none;
+}
+.voice-tip.show{display:block;}
+@keyframes pulse{
+    0%{opacity:1;}
+    50%{opacity:0.6;}
+    100%{opacity:1;}
+}
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+}
+.form-item label{
+    font-size:11px;
+    color:var(--text-sub);
+    margin-bottom:4px;
+    display:block;
+}
+.form-item input,.form-item select{
+    width:100%;
+    height:38px;
+    padding:0 8px;
+    border:1px solid var(--input-border);
+    border-radius:8px;
+    font-size:14px;
+    color:var(--text);
+    background:var(--input);
+    outline:none;
+}
+.form-item input:focus,.form-item select:focus{
+    border-color:var(--input-focus);
+}
+.form-item.full{grid-column:span 2;}
+.empty-toggle{
+    font-size:12px;
+    color:var(--text-sub);
+    text-align:center;
+    padding:6px;
+    cursor:pointer;
+    border-top:1px dashed var(--divider);
+    margin-top:8px;
+}
+.empty-box{
+    display:none;
+    padding-top:8px;
+}
+.empty-box.show{display:block;}
+.calc-btn{
+    width:100%;
+    height:44px;
+    border:none;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:700;
+    color:#fff;
+    cursor:pointer;
+    background:var(--primary);
+    box-shadow:0 4px 16px rgba(59,130,246,0.3);
+    margin-bottom:10px;
+}
+.result{
+    display:none;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:12px;
+    padding:12px;
+}
+.result.show{display:block;}
+.profit-main{
+    text-align:center;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid rgba(52,211,153,0.2);
+    background:rgba(52,211,153,0.08);
+    margin-bottom:10px;
+}
+.profit-main.bad{
+    border-color:rgba(248,113,113,0.2);
+    background:rgba(248,113,113,0.08);
+}
+.profit-label{font-size:12px;color:var(--text-sub);margin-bottom:4px;}
+.profit-num{
+    font-size:28px;
+    font-weight:900;
+    color:var(--success);
+}
+.profit-main.bad .profit-num{color:var(--danger);}
+.result-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+}
+.result-item{
+    background:var(--input);
+    border-radius:8px;
+    padding:8px;
+    text-align:center;
+}
+.result-item .t{font-size:11px;color:var(--text-sub);margin-bottom:3px;}
+.result-item .v{font-size:15px;font-weight:800;}
+.c-green{color:var(--success);}
+.c-red{color:var(--danger);}
+.c-blue{color:#7dd3fc;}
+</style>
+</head>
+<body>
+<div class="head">
+    <h1>货运成本速算</h1>
+    <button class="clear-btn" id="btnClear">清数据</button>
+</div>
+<div class="card">
+    <div class="card-title">基础参数</div>
+    <div class="form-grid">
+        <div class="form-item">
+            <label>油耗 L/100km</label>
+            <select id="oilUse">
+                <option value="17">空/轻载 17</option>
+                <option value="21" selected>标载 21</option>
+                <option value="23">重载 23</option>
+            </select>
+        </div>
+        <div class="form-item">
+            <label>柴油 元/升</label>
+            <input type="number" step="0.1" id="oilPrice" value="7.8">
+        </div>
+        <div class="form-item full">
+            <label>高速费 元/km</label>
+            <input type="number" step="0.1" id="roadPrice" value="1.1">
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-title">货源信息</div>
+    <button class="voice-btn" id="voiceBtn">🎤 语音录入（里程/运费/放空）</button>
+    <div class="voice-tip" id="voiceTip">正在聆听... 例如：580公里 运费3200 放空30</div>
+    
+    <div class="form-grid">
+        <div class="form-item">
+            <label>里程 km</label>
+            <input type="number" id="mainKm">
+        </div>
+        <div class="form-item">
+            <label>运费 元</label>
+            <input type="number" id="mainMoney">
+        </div>
+    </div>
+    <div class="empty-toggle" id="emptyToggle">+ 展开放空成本</div>
+    <div class="empty-box" id="emptyBox">
+        <div class="form-grid">
+            <div class="form-item">
+                <label>放空总 km</label>
+                <input type="number" id="emptyKm">
+            </div>
+            <div class="form-item">
+                <label>放空高速 km</label>
+                <input type="number" id="emptyHigh">
+            </div>
+        </div>
+    </div>
+</div>
+<button class="calc-btn" id="btnCalc">一键计算</button>
+<div class="result" id="resultBox">
+    <div class="profit-main" id="profitBox">
+        <div class="profit-label">单趟净赚</div>
+        <div class="profit-num num-font" id="totalProfit">0.00</div>
+    </div>
+    <div class="result-grid">
+        <div class="result-item">
+            <div class="t">每公里净赚</div>
+            <div class="v c-green num-font" id="perKm">0.00</div>
+        </div>
+        <div class="result-item">
+            <div class="t">总成本</div>
+            <div class="v c-red num-font" id="totalCost">0.00</div>
+        </div>
+    </div>
+</div>
+<script>
+// 放空固定油耗：16L/百公里
+const EMPTY_OIL_RATE = 16;
+// 需要本地缓存的表单字段
+const cacheKeys = ['oilUse','oilPrice','roadPrice','mainKm','mainMoney','emptyKm','emptyHigh'];
+
+// 金额格式化，保留两位小数
+function formatMoney(n){
+    if(isNaN(n)) return "0.00";
+    return Number(n).toFixed(2);
+}
+
+// 获取输入框数值，空/负数返回0
+function getNum(id){
+    var v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) || v < 0 ? 0 : v;
+}
+
+// 保存表单数据到localStorage
+function saveCache(){
+    try{
+        var data = {};
+        cacheKeys.forEach(function(k){
+            if(document.getElementById(k)) data[k] = document.getElementById(k).value;
+        });
+        localStorage.setItem("float_calc", JSON.stringify(data));
+    }catch(e){}
+}
+
+// 页面加载读取缓存回填表单
+function loadCache(){
+    try{
+        var data = JSON.parse(localStorage.getItem("float_calc") || "{}");
+        cacheKeys.forEach(function(k){
+            if(data[k] !== undefined && document.getElementById(k)){
+                document.getElementById(k).value = data[k];
+            }
+        });
+    }catch(e){}
+}
+
+// 核心计算逻辑
+function calculate(){
+    var oilUse = Number(document.getElementById("oilUse").value);
+    var oilPrice = getNum("oilPrice");
+    var roadPrice = getNum("roadPrice");
+    var mainKm = getNum("mainKm");
+    var mainMoney = getNum("mainMoney");
+    var emptyKm = getNum("emptyKm");
+    var emptyHigh = getNum("emptyHigh");
+
+    // 载货油费 = 里程 * 百公里油耗 / 100 * 油价
+    var mainOil = mainKm * oilUse / 100 * oilPrice;
+    // 载货高速费
+    var mainRoad = mainKm * roadPrice;
+    // 放空油费（固定16L/100km）
+    var emptyOil = emptyKm * EMPTY_OIL_RATE / 100 * oilPrice;
+    // 放空高速费（仅放空高速里程计费）
+    var emptyRoad = emptyHigh * roadPrice;
+
+    // 总支出
+    var allCost = mainOil + mainRoad + emptyOil + emptyRoad;
+    // 纯利润 = 运费 - 全部成本
+    var profit = mainMoney - allCost;
+    // 总行驶里程（载货+放空）
+    var totalKm = mainKm + emptyKm;
+    // 每公里利润
+    var perKm = totalKm > 0 ? profit / totalKm : 0;
+
+    // 页面赋值渲染
+    document.getElementById("totalProfit").innerText = formatMoney(profit);
+    document.getElementById("perKm").innerText = formatMoney(perKm);
+    document.getElementById("totalCost").innerText = formatMoney(allCost);
+
+    // 盈利/亏损颜色切换
+    var box = document.getElementById("profitBox");
+    if(profit >= 0){
+        box.className = "profit-main";
+    }else{
+        box.className = "profit-main bad";
+    }
+    document.getElementById("resultBox").classList.add("show");
+    saveCache();
+}
+
+// ========== 浏览器语音识别模块 ==========
+var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+var recognition = null;
+var isRecording = false;
+
+if(SpeechRecognition){
+    recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    // 开始录音
+    recognition.onstart = function(){
+        isRecording = true;
+        document.getElementById("voiceBtn").classList.add("recording");
+        document.getElementById("voiceBtn").innerText = "🔴 正在聆听...";
+        document.getElementById("voiceTip").classList.add("show");
+    };
+    // 结束录音
+    recognition.onend = function(){
+        isRecording = false;
+        document.getElementById("voiceBtn").classList.remove("recording");
+        document.getElementById("voiceBtn").innerText = "🎤 语音录入（里程/运费/放空）";
+        document.getElementById("voiceTip").classList.remove("show");
+    };
+    // 识别报错
+    recognition.onerror = function(e){
+        console.error("语音识别错误:", e.error);
+        alert("语音识别失败，请检查麦克风权限或网络");
+    };
+    // 识别结果回调
+    recognition.onresult = function(event){
+        var text = event.results[0][0].transcript;
+        parseVoiceText(text);
+    };
+}
+
+// 解析语音文字提取里程、运费、放空里程
+function parseVoiceText(text){
+    // 匹配所有数字
+    var nums = text.match(/\d+(\.\d+)?/g);
+    if(!nums || nums.length === 0){
+        alert("没识别到数字，请再说一次");
+        return;
+    }
+    nums = nums.map(Number);
+    var km = null, money = null, empty = null;
+
+    // 关键词精准匹配
+    var kmMatch = text.match(/(\d+(\.\d+)?)[公里|km|千米]/);
+    var moneyMatch = text.match(/运费[^\d]*(\d+(\.\d+)?)/);
+    var emptyMatch = text.match(/放空[^\d]*(\d+(\.\d+)?)/);
+
+    if(kmMatch) km = Number(kmMatch[1]);
+    if(moneyMatch) money = Number(moneyMatch[1]);
+    if(emptyMatch) empty = Number(emptyMatch[1]);
+
+    // 剩余数字按顺序填充
+    var remain = nums.filter(function(n){
+        return n !== km && n !== money && n !== empty;
+    });
+    if(km === null && remain.length > 0) km = remain.shift();
+    if(money === null && remain.length > 0) money = remain.shift();
+    if(empty === null && remain.length > 0) empty = remain.shift();
+
+    // 回填表单
+    if(km !== null) document.getElementById("mainKm").value = km;
+    if(money !== null) document.getElementById("mainMoney").value = money;
+    if(empty !== null){
+        document.getElementById("emptyKm").value = empty;
+        document.getElementById("emptyBox").classList.add("show");
+        document.getElementById("emptyToggle").innerText = "− 收起放空成本";
+    }
+    saveCache();
+    // 有里程和运费自动计算
+    if(km && money){
+        calculate();
+    }
+}
+
+// 页面DOM加载完成绑定事件
+document.addEventListener('DOMContentLoaded',function(){
+    loadCache();
+    // 计算按钮
+    document.getElementById("btnCalc").onclick = calculate;
+    // 展开/收起放空面板
+    document.getElementById("emptyToggle").onclick = function(){
+        document.getElementById("emptyBox").classList.toggle("show");
+        this.innerText = document.getElementById("emptyBox").classList.contains("show")
+            ? "− 收起放空成本"
+            : "+ 展开放空成本";
+    };
+    // 清空数据按钮
+    document.getElementById("btnClear").onclick = function(){
+        document.getElementById("mainKm").value = "";
+        document.getElementById("mainMoney").value = "";
+        document.getElementById("emptyKm").value = "";
+        document.getElementById("emptyHigh").value = "";
+        document.getElementById("resultBox").classList.remove("show");
+        saveCache();
+    };
+    // 所有输入框修改自动缓存
+    document.querySelectorAll("input,select").forEach(function(el){
+        el.addEventListener("change", saveCache);
+    });
+    // 语音录制按钮
+    document.getElementById("voiceBtn").onclick = function(){
+        if(!recognition){
+            alert("当前浏览器不支持语音识别，请用Chrome或系统自带浏览器打开");
+            return;
+        }
+        if(isRecording){
+            recognition.stop();
+        }else{
+            recognition.start();
+        }
+    };
+});
+</script>
+</body>
+</html>
