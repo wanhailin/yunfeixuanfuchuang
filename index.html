@@ -1,356 +1,1219 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>货运速算</title>
-<style>
-:root{
-    --bg:#050b18;
-    --card:#0f172a;
-    --card-border:rgba(255,255,255,0.08);
-    --text:#e2e8f0;
-    --text-sub:#94a3b8;
-    --input:#1e293b;
-    --input-border:rgba(255,255,255,0.08);
-    --input-focus:#38bdf8;
-    --primary:#3b82f6;
-    --success:#34d399;
-    --danger:#f87171;
-    --divider:rgba(255,255,255,0.08);
-}
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif;}
-html,body{
-    touch-action: manipulation;
-    -webkit-text-size-adjust:100%;
-    text-size-adjust:100%;
-    -webkit-tap-highlight-color:transparent;
-}
-body{
-    color:var(--text);
-    background:var(--bg);
-    padding:10px;
-    min-width:260px;
-}
-summary{
-    padding:8px 10px;
-    border-radius:8px;
-    background:#141e33;
-    cursor:pointer;
-    font-size:13px;
-    color:#94a3b8;
-}
-details{
-    margin-bottom:10px;
-    border-radius:10px;
-    overflow:hidden;
-}
-details[open]{
-    background:#0e1729;
-    padding:8px;
-}
-.big-textarea{
-    width:100%;
-    min-height:68px;
-    border-radius:10px;
-    border:1px solid rgba(56,189,248,0.4);
-    background:var(--input);
-    color:var(--text);
-    padding:10px;
-    font-size:15px;
-    outline:none;
-    resize:none;
-    margin-bottom:10px;
-}
-.hint-text{
-    font-size:11px;
-    color:#7dd3fc;
-    margin-bottom:8px;
-}
-.form-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-    margin-bottom:10px;
-}
-.form-item label{
-    font-size:11px;
-    color:var(--text-sub);
-    margin-bottom:3px;
-    display:block;
-}
-.form-item input,.form-item select{
-    width:100%;
-    height:38px;
-    padding:0 8px;
-    border:1px solid var(--input-border);
-    border-radius:8px;
-    font-size:14px;
-    color:var(--text);
-    background:var(--input);
-    outline:none;
-}
-.result-box{
-    background:var(--card);
-    border:1px solid var(--card-border);
-    border-radius:12px;
-    padding:14px;
-    margin-bottom:10px;
-}
-.profit-num{
-    text-align:center;
-    font-size:40px;
-    font-weight:900;
-    margin:4px 0;
-    color:var(--success);
-    user-select:text;
-}
-.profit-num.bad{color:var(--danger);}
-.perkm-text{
-    text-align:center;
-    font-size:16px;
-    color:#cbd5e1;
-    margin-bottom:10px;
-    user-select:text;
-}
-.tip-text{
-    text-align:center;
-    font-size:16px;
-    font-weight:bold;
-    padding:10px;
-    border-radius:8px;
-    user-select:text;
-}
-.tip-good{background:rgba(52,211,153,0.12);color:var(--success);}
-.tip-bad{background:rgba(248,113,113,0.12);color:var(--danger);}
-.btn-row{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-    margin:8px 0 12px;
-}
-button{
-    height:44px;
-    border:none;
-    border-radius:10px;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
-}
-.btn-calc{
-    background:var(--primary);
-    color:#fff;
-}
-.btn-clear{
-    background:#272d3b;
-    color:#b1b8c4;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>货运共路距离计算器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #0a0e1a;
+            background-image:
+                radial-gradient(ellipse at 20% 0%, rgba(255,107,53,0.10) 0%, transparent 45%),
+                radial-gradient(ellipse at 80% 100%, rgba(0,212,255,0.08) 0%, transparent 45%);
+            background-attachment: fixed;
+            color: #e8eaf0;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .container { max-width: 560px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 28px 20px 22px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 64px; height: 3px;
+            background: linear-gradient(90deg, #ff6b35, #00d4ff);
+            border-radius: 2px;
+        }
+        .header-title {
+            font-size: 23px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 7px;
+            letter-spacing: 1px;
+        }
+        .header-sub {
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            letter-spacing: 0.5px;
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.035);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title::before {
+            content: '';
+            width: 3px; height: 16px;
+            background: linear-gradient(180deg, #ff6b35, #00d4ff);
+            border-radius: 2px;
+        }
+        .group-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 1px;
+            margin: 4px 0 10px;
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .group-title .line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+        }
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-of-type { margin-bottom: 18px; }
+        .form-label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
+            font-weight: 600;
+        }
+        .label-desc {
+            font-size: 12px;
+            color: rgba(255,255,255,0.35);
+            font-weight: normal;
+            margin-left: auto;
+        }
+        .point-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px; height: 26px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-right: 10px;
+            color: #fff;
+        }
+        .point-a { background: linear-gradient(135deg, #ff6b35, #ff8c5a); box-shadow: 0 2px 10px rgba(255,107,53,0.4); }
+        .point-b { background: linear-gradient(135deg, #00d4ff, #00b8e6); box-shadow: 0 2px 10px rgba(0,212,255,0.4); }
+        .point-c { background: linear-gradient(135deg, #00d4ff, #00b8e6); box-shadow: 0 2px 10px rgba(0,212,255,0.4); }
+        .point-d { background: linear-gradient(135deg, #ff6b35, #ff8c5a); box-shadow: 0 2px 10px rgba(255,107,53,0.4); }
+        .input-wrap { position: relative; }
+        .tech-input {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        .tech-input:focus {
+            outline: none;
+            border-color: rgba(255,107,53,0.6);
+            box-shadow: 0 0 0 3px rgba(255,107,53,0.12), 0 0 20px rgba(255,107,53,0.08);
+            background: rgba(255,255,255,0.06);
+        }
+        .tech-input::placeholder { color: rgba(255,255,255,0.28); }
+        .clean-icon-btn {
+            position: absolute;
+            right: 8px; top: 50%;
+            transform: translateY(-50%);
+            width: 34px; height: 34px;
+            border: none;
+            background: rgba(255,255,255,0.06);
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .clean-icon-btn:hover { background: rgba(255,255,255,0.12); }
+        .calc-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(255,107,53,0.35);
+            letter-spacing: 2px;
+        }
+        .calc-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(255,107,53,0.45); }
+        .calc-btn:active { transform: translateY(0); }
+        .calc-btn:disabled { background: rgba(255,255,255,0.08); box-shadow: none; cursor: not-allowed; color: rgba(255,255,255,0.4); }
+        .clear-link {
+            background: none; border: none;
+            color: rgba(255,255,255,0.4);
+            font-size: 13px; cursor: pointer;
+            padding: 4px 8px;
+            text-decoration: underline;
+            width: auto; box-shadow: none;
+            letter-spacing: 0;
+        }
+        .clear-link:hover { color: #ff8c5a; }
+        .status-text {
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 12px;
+            min-height: 18px;
+        }
+        .loading-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            background: #ff6b35;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .error-box {
+            background: rgba(255,77,79,0.1);
+            border: 1px solid rgba(255,77,79,0.3);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            color: #ff8a80;
+            line-height: 1.6;
+        }
+        .optimal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,212,255,0.05));
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: #00d4ff;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .route-flow {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 8px 4px;
+        }
+        .route-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .route-node .node-dot {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.15);
+        }
+        .route-node .node-role {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            margin-top: -4px;
+        }
+        .route-node .node-name {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            max-width: 64px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .route-line {
+            flex: 1;
+            height: 3px;
+            margin: 16px 2px 0;
+            border-radius: 2px;
+            flex-shrink: 1;
+            min-width: 12px;
+            position: relative;
+        }
+        .route-line.solo { background: rgba(0,212,255,0.25); }
+        .route-line.shared {
+            background: linear-gradient(90deg, #ff6b35, #ff8c5a);
+            box-shadow: 0 0 10px rgba(255,107,53,0.5);
+        }
+        .route-line.empty {
+            background: repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 4px, transparent 4px, transparent 8px);
+        }
+        .route-line .line-dist {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            white-space: nowrap;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 14px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .stat-card:hover { border-color: rgba(255,255,255,0.15); }
+        .stat-card.highlight {
+            border-color: rgba(255,107,53,0.35);
+            background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,107,53,0.02));
+        }
+        .stat-card.highlight::after {
+            content: '';
+            position: absolute;
+            top: -30px; right: -30px;
+            width: 80px; height: 80px;
+            background: radial-gradient(circle, rgba(255,107,53,0.15), transparent 70%);
+            pointer-events: none;
+        }
+        .stat-card.cyan {
+            border-color: rgba(0,212,255,0.3);
+            background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(0,212,255,0.02));
+        }
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .stat-card .stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+        }
+        .stat-card.highlight .stat-value { color: #ff8c5a; }
+        .stat-card.cyan .stat-value { color: #00d4ff; }
+        .stat-card .stat-unit {
+            font-size: 13px;
+            color: rgba(255,255,255,0.35);
+            margin-left: 3px;
+            font-weight: 500;
+        }
+        .shared-hero {
+            background: linear-gradient(135deg, rgba(255,107,53,0.12), rgba(255,107,53,0.02));
+            border: 1px solid rgba(255,107,53,0.25);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        .shared-hero::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -40px;
+            width: 220px; height: 220px;
+            background: radial-gradient(circle, rgba(255,107,53,0.12), transparent 70%);
+            pointer-events: none;
+        }
+        .shared-hero .hero-label {
+            font-size: 13px;
+            color: #ff8c5a;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            z-index: 1;
+        }
+        .shared-hero .hero-num {
+            font-size: 40px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+        .shared-hero .hero-unit {
+            font-size: 16px;
+            color: rgba(255,255,255,0.45);
+            margin-left: 5px;
+            font-weight: 500;
+        }
+        .progress-track {
+            height: 6px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 3px;
+            margin-top: 16px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b35, #ff8c5a);
+            border-radius: 3px;
+            transition: width 0.6s ease;
+            box-shadow: 0 0 12px rgba(255,107,53,0.5);
+        }
+        .progress-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 7px;
+            text-align: right;
+            position: relative;
+            z-index: 1;
+        }
+        .map-panel-wrap {
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+        }
+        .map-panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(255,255,255,0.025);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .map-panel-head:active { background: rgba(255,255,255,0.05); }
+        .map-panel-head .head-title { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.8); }
+        .map-panel-head .head-arrow { font-size: 12px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+        .map-panel-wrap.collapsed .head-arrow { transform: rotate(-90deg); }
+        .map-panel-body { max-height: 2000px; transition: max-height 0.35s ease; overflow: hidden; }
+        .map-panel-wrap.collapsed .map-panel-body { max-height: 0; }
+        #mapContainer { width: 100%; height: 300px; background: #141928; }
+        .map-placeholder {
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            color: rgba(255,255,255,0.25); font-size: 13px;
+        }
+        .map-placeholder .big { font-size: 40px; margin-bottom: 10px; opacity: 0.4; }
+        .map-legend {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            padding: 12px 0;
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.015);
+        }
+        .legend-line {
+            display: inline-block;
+            width: 24px; height: 4px;
+            border-radius: 2px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-row .row-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+        .data-row .row-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .data-row .row-value small {
+            display: block;
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            font-weight: normal;
+            margin-top: 3px;
+        }
+        .data-row.shared-row {
+            background: linear-gradient(90deg, rgba(255,107,53,0.08), transparent);
+            margin: 0 -18px;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border-bottom: none;
+        }
+        .data-row.shared-row .row-value { color: #ff8c5a; }
+        .data-row.empty-row {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03), transparent);
+            margin: 0 -18px;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border-bottom: none;
+        }
+        .data-row.empty-row .row-value { color: rgba(255,255,255,0.5); }
+        .data-row.total-row .row-value { color: #ff8c5a; font-size: 20px; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+            vertical-align: middle;
+            font-weight: 500;
+        }
+        .badge-solo { background: rgba(0,212,255,0.12); color: #00d4ff; }
+        .badge-shared { background: rgba(255,107,53,0.12); color: #ff8c5a; }
+        .badge-empty { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+        .badge-main { background: rgba(255,107,53,0.12); color: #ff8c5a; }
+        .badge-sub { background: rgba(0,212,255,0.12); color: #00d4ff; }
+        .navi-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.25);
+            border-radius: 20px;
+            color: #00d4ff;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .navi-pill:hover { background: rgba(0,212,255,0.18); }
+        .navi-pill.shared {
+            background: rgba(255,107,53,0.1);
+            border-color: rgba(255,107,53,0.25);
+            color: #ff8c5a;
+        }
+        .navi-pill.shared:hover { background: rgba(255,107,53,0.18); }
+        .footer-tip {
+            font-size: 12px;
+            color: rgba(255,255,255,0.25);
+            text-align: center;
+            line-height: 1.8;
+            margin-top: 12px;
+            padding-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-<div class="hint-text">🎤点输入框，输入法麦克风说话：550公里，运费3300，放空40</div>
-<textarea class="big-textarea" id="voiceTextArea" placeholder="口述货源信息"></textarea>
-<div class="form-grid">
-    <div class="form-item">
-        <label>里程 km</label>
-        <input type="number" id="mainKm">
-    </div>
-    <div class="form-item">
-        <label>运费 元</label>
-        <input type="number" id="mainMoney">
-    </div>
-    <div class="form-item">
-        <label>放空 km</label>
-        <input type="number" id="emptyKm">
-    </div>
-    <div class="form-item">
-        <label>放空高速 km</label>
-        <input type="number" id="emptyHigh">
-    </div>
-</div>
-<div class="btn-row">
-    <button class="btn-calc" id="btnCalc">计算并播报</button>
-    <button class="btn-clear" id="btnClear">清空</button>
-</div>
-<div class="result-box" id="resultBox" style="display:none;">
-    <div style="text-align:center;font-size:12px;color:#94a3b8">预估净赚</div>
-    <div class="profit-num" id="profitDisplay">0.00</div>
-    <div class="perkm-text" id="perKmDisplay">每公里净赚：0.00元</div>
-    <div class="tip-text tip-good" id="tipDisplay">--</div>
-</div>
-<!-- 高级参数，默认折叠 -->
-<details>
-    <summary>⚙️高级参数（油耗/油价/底价）</summary>
-    <div class="form-grid">
-        <div class="form-item">
-            <label>油耗 L/100km</label>
-            <select id="oilUse">
-                <option value="17">空/轻载17</option>
-                <option value="21" selected>标载21</option>
-                <option value="23">重载23</option>
-            </select>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">🚚 货运共路距离计算器</div>
+            <div class="header-sub">智能规划最优装卸顺序 ｜ 不绕路 不重复 不空档</div>
         </div>
-        <div class="form-item">
-            <label>柴油 元/升</label>
-            <input type="number" step="0.1" id="oilPrice" value="7.8">
+        <div class="glass-card" style="padding:18px; margin-bottom:14px;">
+            <div class="group-title"><span>📦 主单</span><span class="line"></span></div>
+            <div class="form-group">
+                <div class="form-label"><span class="point-tag point-a">A</span>装货点<span class="label-desc">主单起点</span></div>
+                <div class="input-wrap">
+                    <input type="text" id="addrA" class="tech-input" placeholder="粘贴客户微信地址，自动清理" onpaste="handlePaste('addrA')">
+                    <button type="button" class="clean-icon-btn" onclick="cleanInput('addrA')" title="清理提取地址">🧹</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-label"><span class="point-tag point-d">D</span>卸货点<span class="label-desc">主单终点</span></div>
+                <div class="input-wrap">
+                    <input type="text" id="addrD" class="tech-input" placeholder="粘贴客户微信地址，自动清理" onpaste="handlePaste('addrD')">
+                    <button type="button" class="clean-icon-btn" onclick="cleanInput('addrD')" title="清理提取地址">🧹</button>
+                </div>
+            </div>
+            <div class="group-title"><span>📦 拼单</span><span class="line"></span></div>
+            <div class="form-group">
+                <div class="form-label"><span class="point-tag point-b">B</span>装货点<span class="label-desc">拼单起点</span></div>
+                <div class="input-wrap">
+                    <input type="text" id="addrB" class="tech-input" placeholder="粘贴客户微信地址，自动清理" onpaste="handlePaste('addrB')">
+                    <button type="button" class="clean-icon-btn" onclick="cleanInput('addrB')" title="清理提取地址">🧹</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-label"><span class="point-tag point-c">C</span>卸货点<span class="label-desc">拼单终点</span></div>
+                <div class="input-wrap">
+                    <input type="text" id="addrC" class="tech-input" placeholder="粘贴客户微信地址，自动清理" onpaste="handlePaste('addrC')">
+                    <button type="button" class="clean-icon-btn" onclick="cleanInput('addrC')" title="清理提取地址">🧹</button>
+                </div>
+            </div>
+            <button id="calcBtn" class="calc-btn" onclick="calcRoute()">智能规划路线</button>
+            <div style="text-align:center;margin-top:12px;">
+                <button type="button" class="clear-link" onclick="clearAddr()">清空全部地址</button>
+            </div>
+            <div class="status-text" id="status"></div>
         </div>
-        <div class="form-item">
-            <label>高速费元/km</label>
-            <input type="number" step="0.1" id="roadPrice" value="1.1">
+        <div id="errorBox" style="display:none;"></div>
+        <div id="resultBox" style="display:none;">
+            <div class="glass-card" style="padding:16px; margin-bottom:14px;">
+                <div class="optimal-badge">✨ 已规划最优路线</div>
+                <div class="route-flow" id="routeFlow"></div>
+            </div>
+            <div class="glass-card" style="padding:18px; margin-bottom:14px;">
+                <div class="section-title">📊 数据一览</div>
+                <div class="stat-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-label">最优路线总里程</div>
+                        <div class="stat-value" id="ovTotal">-<span class="stat-unit">km</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">共路里程</div>
+                        <div class="stat-value" id="ovShared">-<span class="stat-unit">km</span></div>
+                    </div>
+                    <div class="stat-card cyan">
+                        <div class="stat-label">主单行驶（A装→D卸）</div>
+                        <div class="stat-value" id="ovMain">-<span class="stat-unit">km</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">拼单行驶（B装→C卸）</div>
+                        <div class="stat-value" id="ovSub">-<span class="stat-unit">km</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="shared-hero">
+                <div class="hero-label">⭐ 共路路段（主单+拼单同程）</div>
+                <div><span class="hero-num" id="sharedDist">-</span><span class="hero-unit">公里</span></div>
+                <div class="progress-track"><div class="progress-fill" id="ratioFill" style="width:0%"></div></div>
+                <div class="progress-label" id="ratioText">共路占总里程 -</div>
+            </div>
+            <div class="map-panel-wrap" id="mapPanel">
+                <div class="map-panel-head" onclick="toggleMap()">
+                    <span class="head-title">🗺️ 路线地图</span>
+                    <span class="head-arrow">▼</span>
+                </div>
+                <div class="map-panel-body">
+                    <div id="mapContainer">
+                        <div class="map-placeholder" id="mapPlaceholder">
+                            <div class="big">🗺️</div>
+                            <div>计算后将在这里显示路线地图</div>
+                        </div>
+                    </div>
+                    <div class="map-legend">
+                        <span><span class="legend-line" style="background:#00d4ff"></span>单独行驶</span>
+                        <span><span class="legend-line" style="background:#ff6b35"></span>共路（加粗）</span>
+                        <span><span class="legend-line" style="background:repeating-linear-gradient(90deg,rgba(255,255,255,0.4) 0,rgba(255,255,255,0.4) 4px,transparent 4px,transparent 8px)"></span>空驶（无货）</span>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card" style="padding:18px;">
+                <div class="section-title">📋 分段明细</div>
+                <div id="segmentList"></div>
+                <div class="data-row total-row">
+                    <span class="row-label" style="font-weight:600;">最优路线总里程</span>
+                    <span class="row-value" id="resTotal">-<small id="timeTotal"></small></span>
+                </div>
+            </div>
         </div>
-        <div class="form-item">
-            <label>接单底价元/km</label>
-            <input type="number" step="0.1" id="basePrice" value="1.0">
+        <div class="footer-tip">
+            数据来源：高德地图 · 按实际驾车导航里程计算<br>
+            系统自动枚举6种合法装卸顺序，选总里程最短的最优路线<br>
+            地址请尽量详细（省+市+区+街道），解析更准确
         </div>
     </div>
-</details>
-<script>
-const EMPTY_OIL_RATE = 16;
-const cacheKeys = ['oilUse','oilPrice','roadPrice','basePrice','mainKm','mainMoney','emptyKm','emptyHigh'];
-// 检测语音播报支持
-var supportSpeak = 'speechSynthesis' in window;
-// 检测震动支持
-var supportVibrate = 'vibrate' in navigator;
-function formatMoney(n){
-    if(isNaN(n)) return "0.00";
-    return Number(n).toFixed(2);
-}
-function getNum(id){
-    var v = parseFloat(document.getElementById(id).value);
-    return isNaN(v)||v<0 ? 0 : v;
-}
-function saveCache(){
-    try{
-        var data = {};
-        cacheKeys.forEach(function(k){
-            var el = document.getElementById(k);
-            if(el) data[k]=el.value;
+    <script src="https://webapi.amap.com/maps?v=2.0&key=3d27557bb7b7cfad571313afb5beedd5"></script>
+    <script>
+        var AMAP_WEB_KEY = '40c91067846da190bf525a5737d8ac06';
+        var map = null;
+        var mapReady = false;
+        var STORAGE_KEY = 'freight_addr_last';
+        var ADDR_IDS = ['addrA', 'addrB', 'addrC', 'addrD'];
+        var POINT_ROLE = {
+            A: { role: 'mainLoad', name: '主单装货', tag: 'A', color: 'orange' },
+            D: { role: 'mainUnload', name: '主单卸货', tag: 'D', color: 'orange' },
+            B: { role: 'subLoad', name: '拼单装货', tag: 'B', color: 'cyan' },
+            C: { role: 'subUnload', name: '拼单卸货', tag: 'C', color: 'cyan' }
+        };
+        var VALID_PATHS = [
+            ['A','B','C','D'],
+            ['A','B','D','C'],
+            ['A','D','B','C'],
+            ['B','A','C','D'],
+            ['B','A','D','C'],
+            ['B','C','A','D']
+        ];
+        var geoPoints = {};
+        var optimalPath = null;
+        var routeMatrix = {};
+        function saveAddr() {
+            try {
+                var data = {};
+                ADDR_IDS.forEach(function(id) {
+                    data[id] = document.getElementById(id).value.trim();
+                });
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {}
+        }
+        function loadAddr() {
+            try {
+                var raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                var data = JSON.parse(raw);
+                var hasValue = false;
+                ADDR_IDS.forEach(function(id) {
+                    if (data[id]) {
+                        document.getElementById(id).value = data[id];
+                        hasValue = true;
+                    }
+                });
+                return hasValue;
+            } catch (e) { return false; }
+        }
+        function clearAddr() {
+            ADDR_IDS.forEach(function(id) {
+                document.getElementById(id).value = '';
+            });
+            try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+            document.getElementById('resultBox').style.display = 'none';
+            hideError();
+            setStatus('已清空');
+            setTimeout(function() { setStatus(''); }, 1200);
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+            loadAddr();
+            ADDR_IDS.forEach(function(id) {
+                document.getElementById(id).addEventListener('input', saveAddr);
+            });
         });
-        localStorage.setItem("truckCalcMini",JSON.stringify(data));
-    }catch(e){}
-}
-function loadCache(){
-    try{
-        var d = JSON.parse(localStorage.getItem("truckCalcMini")||"{}");
-        cacheKeys.forEach(function(k){
-            var el = document.getElementById(k);
-            if(d[k]!==undefined && el) el.value = d[k];
-        })
-    }catch(e){}
-}
-// 语音播报函数
-function speakResult(profit,perKm,isOk){
-    if(!supportSpeak) return;
-    window.speechSynthesis.cancel();
-    
-    var roundProfit = Math.round(profit);
-    var text = "单趟净赚" + roundProfit + "元，每公里净赚" + perKm.toFixed(1) + "元。";
-    text += isOk ? "符合标准，可以承接。" : "低于底价，不建议承接。";
-    
-    var utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "zh-CN";
-    utter.rate = 1.0;
-    utter.volume = 1.0;
-    
-    window.speechSynthesis.speak(utter);
-}
-// 解析口述文本
-function parseInputText(text){
-    if(!text) return;
-    var nums = text.match(/\d+(\.\d+)?/g);
-    if(!nums) return;
-    var arrNum = nums.map(Number);
-    var km=null,money=null,empty=null;
-    var kmMatch = text.match(/(\d+(\.\d+)?)[公里|km|千米]/);
-    var moneyMatch = text.match(/运费[^\d]*(\d+(\.\d+)?)/);
-    var emptyMatch = text.match(/放空[^\d]*(\d+(\.\d+)?)/);
-    if(kmMatch) km=Number(kmMatch[1]);
-    if(moneyMatch) money=Number(moneyMatch[1]);
-    if(emptyMatch) empty=Number(emptyMatch[1]);
-    var remain = arrNum.filter(function(n){ return n!==km && n!==money && n!==empty; });
-    if(km===null && remain.length>0) km=remain.shift();
-    if(money===null && remain.length>0) money=remain.shift();
-    if(empty===null && remain.length>0) empty=remain.shift();
-    if(km!==null) document.getElementById("mainKm").value=km;
-    if(money!==null) document.getElementById("mainMoney").value=money;
-    if(empty!==null) document.getElementById("emptyKm").value=empty;
-    saveCache();
-}
-// 计算核心逻辑
-function calculate(){
-    var oilUse = Number(document.getElementById("oilUse").value);
-    var oilPrice = getNum("oilPrice");
-    var roadPrice = getNum("roadPrice");
-    var basePrice = getNum("basePrice");
-    var mainKm = getNum("mainKm");
-    var mainMoney = getNum("mainMoney");
-    var emptyKm = getNum("emptyKm");
-    var emptyHigh = getNum("emptyHigh");
-    var mainOil = mainKm * oilUse /100 * oilPrice;
-    var mainRoad = mainKm * roadPrice;
-    var emptyOil = emptyKm * EMPTY_OIL_RATE /100 * oilPrice;
-    var emptyRoad = emptyHigh * roadPrice;
-    var totalCost = mainOil + mainRoad + emptyOil + emptyRoad;
-    var profit = mainMoney - totalCost;
-    var totalKm = mainKm + emptyKm;
-    var perKm = totalKm>0 ? profit/totalKm : 0;
-    var isOk = perKm >= basePrice;
-    // 渲染结果（大字号，方便长按朗读）
-    var resBox = document.getElementById("resultBox");
-    resBox.style.display="block";
-    var profitDom = document.getElementById("profitDisplay");
-    profitDom.innerText = formatMoney(profit);
-    profitDom.className = "profit-num" + (profit<0?" bad":"");
-    document.getElementById("perKmDisplay").innerText = "每公里净赚："+formatMoney(perKm)+"元";
-    var tipDom = document.getElementById("tipDisplay");
-    if(profit>=0 && isOk){
-        tipDom.className="tip-text tip-good";
-        tipDom.innerText="✅符合接单标准，可以接";
-    }else if(profit>=0 && !isOk){
-        tipDom.className="tip-text tip-bad";
-        tipDom.innerText="⚠️低于底价，谨慎接单";
-    }else{
-        tipDom.className="tip-text tip-bad";
-        tipDom.innerText="❌亏本，不要接";
-    }
-    
-    saveCache();
-    
-    // 计算完成震动提示
-    if(supportVibrate){
-        navigator.vibrate(200); // 震动200毫秒
-    }
-    
-    return { profit:profit, perKm:perKm, isOk:isOk };
-}
-document.addEventListener('DOMContentLoaded',function(){
-    loadCache();
-    var textArea = document.getElementById("voiceTextArea");
-    // 输入框失焦：解析+计算+震动
-    textArea.addEventListener("blur",function(){
-        parseInputText(textArea.value.trim());
-        calculate();
-    });
-    // 点击按钮：计算+震动+尝试播报
-    document.getElementById("btnCalc").onclick = function(){
-        var res = calculate();
-        speakResult(res.profit, res.perKm, res.isOk);
-    };
-    document.getElementById("btnClear").onclick = function(){
-        textArea.value="";
-        document.getElementById("mainKm").value="";
-        document.getElementById("mainMoney").value="";
-        document.getElementById("emptyKm").value="";
-        document.getElementById("emptyHigh").value="";
-        document.getElementById("resultBox").style.display="none";
-        if(supportSpeak) window.speechSynthesis.cancel();
-        saveCache();
-    };
-    // 手动修改数值自动保存
-    document.querySelectorAll("#mainKm,#mainMoney,#emptyKm,#emptyHigh,#oilUse,#oilPrice,#roadPrice,#basePrice").forEach(function(el){
-        el.addEventListener("change",saveCache);
-    });
-});
-</script>
+        function toggleMap() {
+            var panel = document.getElementById('mapPanel');
+            panel.classList.toggle('collapsed');
+            if (!panel.classList.contains('collapsed') && map) {
+                setTimeout(function() { map.resize(); }, 350);
+            }
+        }
+        function initMap() {
+            if (typeof AMap === 'undefined') {
+                console.warn('高德地图SDK未加载');
+                return false;
+            }
+            try {
+                map = new AMap.Map('mapContainer', {
+                    zoom: 5,
+                    center: [110, 23.5],
+                    resizeEnable: true
+                });
+                mapReady = true;
+                document.getElementById('mapPlaceholder').style.display = 'none';
+                return true;
+            } catch (e) {
+                console.warn('地图初始化失败:', e);
+                return false;
+            }
+        }
+        function jsonp(url, timeout) {
+            timeout = timeout || 15000;
+            return new Promise(function(resolve, reject) {
+                var cbName = 'amap_cb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+                var script = document.createElement('script');
+                var timer = setTimeout(function() {
+                    reject(new Error('请求超时，请检查网络连接'));
+                    cleanup();
+                }, timeout);
+                function cleanup() {
+                    clearTimeout(timer);
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                    delete window[cbName];
+                }
+                window[cbName] = function(data) {
+                    resolve(data);
+                    cleanup();
+                };
+                script.onerror = function() {
+                    reject(new Error('网络请求失败，请检查网络连接'));
+                    cleanup();
+                };
+                script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cbName;
+                document.body.appendChild(script);
+            });
+        }
+        function sleep(ms) {
+            return new Promise(function(r) { setTimeout(r, ms); });
+        }
+        function extractCity(address) {
+            var m = address.match(/([\u4e00-\u9fa5]{2,8}?(?:省|自治区|特别行政区))?\s*([\u4e00-\u9fa5]{2,10}?(?:市|自治州|盟|地区))/);
+            if (m && m[2]) return m[2];
+            return '';
+        }
+        function degradeAddress(address, level) {
+            var addr = address.trim();
+            if (level === 0) return addr;
+            if (level >= 1) {
+                addr = addr.replace(/[\u4e00-\u9fa5\d]+(?:号|弄|栋|幢|单元|室|楼|层)\s*[\u4e00-\u9fa5\d]*(?:号|室|层)?/g, '');
+            }
+            if (level >= 2) {
+                addr = addr.replace(/[\u4e00-\u9fa5\d]+(?:路|街|大道|巷|胡同|里|坊)\s*/g, '');
+            }
+            if (level >= 3) {
+                addr = addr.replace(/[\u4e00-\u9fa5]{2,8}(?:镇|乡|街道|街道办|办事处)\s*/g, '');
+            }
+            return addr.replace(/\s+/g, ' ').trim();
+        }
+        function geocodeOnce(address, city) {
+            var url = 'https://restapi.amap.com/v3/geocode/geo?address='
+                + encodeURIComponent(address) + '&key=' + AMAP_WEB_KEY + '&output=JSON';
+            if (city) url += '&city=' + encodeURIComponent(city);
+            return jsonp(url).then(function(data) {
+                if (data.status !== '1' || !data.geocodes || !data.geocodes.length) {
+                    var info = data.info || '未知错误';
+                    if (info === 'INVALID_USER_KEY') throw new Error('高德KEY无效，请检查KEY是否正确');
+                    if (info === 'USERKEY_PLAT_NOMATCH') throw new Error('KEY类型不匹配，请使用「Web服务」类型的KEY');
+                    if (info === 'DAILY_QUERY_OVER_LIMIT') throw new Error('今日调用次数已超限');
+                    throw new Error('NO_RESULT');
+                }
+                var best = data.geocodes[0];
+                var bestLevel = parseInt(best.level) || 99;
+                for (var i = 1; i < data.geocodes.length; i++) {
+                    var lv = parseInt(data.geocodes[i].level) || 99;
+                    if (lv < bestLevel) {
+                        best = data.geocodes[i];
+                        bestLevel = lv;
+                    }
+                }
+                var g = best;
+                var loc = g.location.split(',');
+                return {
+                    lng: loc[0],
+                    lat: loc[1],
+                    formatted: g.formatted_address,
+                    province: g.province,
+                    city: g.city,
+                    district: g.district
+                };
+            });
+        }
+        async function geocode(address, tagName) {
+            var city = extractCity(address);
+            var lastErr = null;
+            for (var level = 0; level <= 3; level++) {
+                var degraded = degradeAddress(address, level);
+                if (!degraded) continue;
+                for (var attempt = 0; attempt < 2; attempt++) {
+                    try {
+                        return await geocodeOnce(degraded, city);
+                    } catch (e) {
+                        lastErr = e;
+                        if (e.message === 'INVALID_USER_KEY' || e.message === 'USERKEY_PLAT_NOMATCH' || e.message === 'DAILY_QUERY_OVER_LIMIT') {
+                            throw e;
+                        }
+                        await sleep(300 + attempt * 200);
+                    }
+                }
+            }
+            throw new Error('地址解析失败：' + (tagName || '') + '「' + address + '」，请检查地址是否完整，建议补充省+市+区信息');
+        }
+        async function driving(origin, destination) {
+            var url = 'https://restapi.amap.com/v3/direction/driving?'
+                + 'origin=' + origin.lng + ',' + origin.lat
+                + '&destination=' + destination.lng + ',' + destination.lat
+                + '&key=' + AMAP_WEB_KEY + '&output=JSON&strategy=10&extensions=all';
+            var lastErr = null;
+            for (var attempt = 0; attempt < 3; attempt++) {
+                try {
+                    var data = await jsonp(url);
+                    if (data.status !== '1' || !data.route || !data.route.paths || !data.route.paths.length) {
+                        var info = data.info || '未知错误';
+                        throw new Error('路线规划失败（' + info + '）');
+                    }
+                    var path = data.route.paths[0];
+                    var coords = [];
+                    if (path.steps && path.steps.length) {
+                        path.steps.forEach(function(step) {
+                            if (step.polyline) {
+                                var points = step.polyline.split(';');
+                                points.forEach(function(p) {
+                                    var ll = p.split(',');
+                                    if (ll.length === 2) {
+                                        coords.push([parseFloat(ll[0]), parseFloat(ll[1])]);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    return {
+                        distance: parseFloat(path.distance),
+                        duration: parseFloat(path.duration),
+                        coords: coords
+                    };
+                } catch (e) {
+                    lastErr = e;
+                    await sleep(400 + attempt * 300);
+                }
+            }
+            throw lastErr;
+        }
+        function getRoute(from, to) {
+            if (routeMatrix[from] && routeMatrix[from][to]) {
+                return routeMatrix[from][to];
+            }
+            var r = routeMatrix[to][from];
+            return {
+                distance: r.distance,
+                duration: r.duration,
+                coords: r.coords.slice().reverse()
+            };
+        }
+        function pathDistance(path) {
+            var total = 0;
+            for (var i = 0; i < path.length - 1; i++) {
+                total += getRoute(path[i], path[i+1]).distance;
+            }
+            return total;
+        }
+        function findOptimalPath() {
+            var best = null;
+            var bestDist = Infinity;
+            VALID_PATHS.forEach(function(path) {
+                var d = pathDistance(path);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = path;
+                }
+            });
+            return best;
+        }
+        function analyzePath(path) {
+            var idxA = path.indexOf('A');
+            var idxD = path.indexOf('D');
+            var idxB = path.indexOf('B');
+            var idxC = path.indexOf('C');
+            var mainSegs = [];
+            var ms = Math.min(idxA, idxD), me = Math.max(idxA, idxD);
+            for (var i = ms; i < me; i++) {
+                mainSegs.push(path[i] + '-' + path[i+1]);
+            }
+            var subSegs = [];
+            var ss = Math.min(idxB, idxC), se = Math.max(idxB, idxC);
+            for (var i = ss; i < se; i++) {
+                subSegs.push(path[i] + '-' + path[i+1]);
+            }
+            var sharedSegs = mainSegs.filter(function(s) {
+                return subSegs.indexOf(s) !== -1;
+            });
+            var segments = [];
+            for (var i = 0; i < path.length - 1; i++) {
+                var key = path[i] + '-' + path[i+1];
+                var type;
+                if (sharedSegs.indexOf(key) !== -1) type = 'shared';
+                else if (mainSegs.indexOf(key) !== -1) type = 'main';
+                else if (subSegs.indexOf(key) !== -1) type = 'sub';
+                else type = 'empty';
+                var r = getRoute(path[i], path[i+1]);
+                segments.push({
+                    from: path[i],
+                    to: path[i+1],
+                    key: key,
+                    type: type,
+                    distance: r.distance,
+                    duration: r.duration,
+                    coords: r.coords
+                });
+            }
+            var sharedDist = 0, mainDist = 0, subDist = 0, emptyDist = 0;
+            segments.forEach(function(seg) {
+                if (seg.type === 'shared') sharedDist += seg.distance;
+                else if (seg.type === 'main') mainDist += seg.distance;
+                else if (seg.type === 'sub') subDist += seg.distance;
+                else emptyDist += seg.distance;
+            });
+            return {
+                segments: segments,
+                sharedSegs: sharedSegs,
+                mainSegs: mainSegs,
+                subSegs: subSegs,
+                sharedDist: sharedDist,
+                mainDist: mainDist + sharedDist,
+                subDist: subDist + sharedDist,
+                emptyDist: emptyDist
+            };
+        }
+        function drawRoute(analysis) {
+            if (!mapReady || !map) return;
+            try {
+                map.clearMap();
+                analysis.segments.forEach(function(seg) {
+                    var color, weight;
+                    if (seg.type === 'shared') { color = '#ff6b35'; weight = 9; }
+                    else if (seg.type === 'empty') { color = 'rgba(255,255,255,0.4)'; weight = 5; }
+                    else { color = '#00d4ff'; weight = 6; }
+                    if (seg.coords && seg.coords.length >= 2) {
+                        var polyline = new AMap.Polyline({
+                            path: seg.coords,
+                            strokeColor: color,
+                            strokeWeight: weight,
+                            strokeOpacity: seg.type === 'empty' ? 0.6 : 0.9,
+                            strokeStyle: seg.type === 'empty' ? 'dashed' : 'solid',
+                            lineJoin: 'round'
+                        });
+                        polyline.setMap(map);
+                    }
+                });
+                optimalPath.forEach(function(tag) {
+                    var p = geoPoints[tag];
+                    var role = POINT_ROLE[tag];
+                    var color = role.color === 'orange' ? '#ff6b35' : '#00d4ff';
+                    var marker = new AMap.Marker({
+                        position: [p.lng, p.lat],
+                        content: '<div style="background:' + color + ';color:#fff;width:32px;height:32px;border-radius:50%;text-align:center;line-height:32px;font-weight:bold;font-size:15px;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.4);">' + tag + '</div>',
+                        anchor: 'bottom-center',
+                        offset: new AMap.Pixel(0, 0)
+                    });
+                    marker.setMap(map);
+                });
+                setTimeout(function() {
+                    map.setFitView(null, false, [50, 50, 50, 50]);
+                }, 200);
+            } catch (e) {
+                console.warn('绘制路线失败:', e);
+            }
+        }
+        function fmtDist(meters) { return (meters / 1000).toFixed(1); }
+        function fmtTime(seconds) {
+            var min = Math.round(seconds / 60);
+            if (min < 60) return '约 ' + min + ' 分钟';
+            var h = Math.floor(min / 60);
+            var m = min % 60;
+            return '约 ' + h + ' 小时 ' + (m > 0 ? m + ' 分钟' : '');
+        }
+        function shortName(p) {
+            if (p.city && p.district) return p.city.replace(/市$/, '') + '·' + p.district;
+            if (p.city) return p.city;
+            if (p.province) return p.province;
+            return p.formatted || '';
+        }
+        function setStatus(msg) {
+            document.getElementById('status').innerHTML = msg
+                ? '<span class="loading-dot"></span>' + msg
+                : '';
+        }
+        function showError(msg) {
+            var box = document.getElementById('errorBox');
+            box.innerHTML = '<div class="error-box">⚠️ ' + msg + '</div>';
+            box.style.display = 'block';
+        }
+        function hideError() {
+            document.getElementById('errorBox').style.display = 'none';
+        }
+        function cleanAddress(raw) {
+            var lines = raw.split(/[\n\r]+/);
+            var addrLines = [];
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (!line) continue;
+                if (/^(收货人|联系人|发货人|姓名|收件人|电话|手机|联系电话|邮编|邮政编码)\s*[:：]/.test(line)) continue;
+                if (/^1[3-9]\d{9}$/.test(line)) continue;
+                if (/^0\d{2,3}[-\s]?\d{7,8}$/.test(line)) continue;
+                line = line.replace(/^(收货地址|发货地址|装货地址|卸货地址|详细地址|收货|发货|地址|所在地区)\s*[:：]?\s*/, '');
+                line = line.replace(/(收货人|联系人|发货人|姓名|收件人)\s*[:：]\s*[\u4e00-\u9fa5A-Za-z·]{2,5}\s*/g, '');
+                line = line.replace(/1[3-9]\d{9}/g, '');
+                line = line.replace(/0\d{2,3}[-\s]?\d{7,8}/g, '');
+                line = line.replace(/[（(]\s*[0-9]{4,6}\s*[）)]/g, '');
+                line = line.trim();
+                if (line) addrLines.push(line);
+            }
+            return addrLines.join(' ').replace(/\s+/g, ' ').trim();
+        }
+        function handlePaste(inputId) {
+            setTimeout(function() {
+                cleanInput(inputId);
+            }, 50);
+        }
+        function cleanInput(inputId) {
+            var el = document.getElementById(inputId);
+            var raw = el.value;
+            if (!raw.trim()) return;
+            var clean = cleanAddress(raw);
+            if (clean && clean !== raw) {
+                el.value = clean;
+                saveAddr();
+            }
+        }
+        function navigateSegment(segIndex) {
+            if (!optimalPath) { alert('请先计算路线'); return; }
+            var from = optimalPath[segIndex];
+            var to = optimalPath[segIndex + 1];
+            var fp = geoPoints[from], tp = geoPoints[to];
+            var url = 'https://uri.amap.com/navigation?from=' + fp.lng + ',' + fp.lat
+                + '&to=' + tp.lng + ',' + tp.lat
+                + '&mode=car&policy=1&src=freight_calc&coordinate=gaode&callnative=1';
+            window.open(url, '_blank');
+        }
+        function renderRouteFlow(path, analysis) {
+            var html = '';
+            for (var i = 0; i < path.length; i++) {
+                var tag = path[i];
+                var role = POINT_ROLE[tag];
+                var color = role.color === 'orange'
+                    ? 'linear-gradient(135deg,#ff6b35,#ff8c5a)'
+                    : 'linear-gradient(135deg,#00d4ff,#00b8e6)';
+                html += '<div class="route-node">'
+                    + '<div class="node-dot" style="background:' + color + '">' + tag + '</div>'
+                    + '<div class="node-role">' + role.name + '</div>'
+                    + '<div class="node-name">' + shortName(geoPoints[tag]) + '</div>'
+                    + '</div>';
+                if (i < path.length - 1) {
+                    var seg = analysis.segments[i];
+                    var lineClass = seg.type === 'shared' ? 'shared' : (seg.type === 'empty' ? 'empty' : 'solo');
+                    html += '<div class="route-line ' + lineClass + '">'
+                        + '<span class="line-dist">' + fmtDist(seg.distance) + 'km</span>'
+                        + '</div>';
+                }
+            }
+            document.getElementById('routeFlow').innerHTML = html;
+        }
+        function renderSegments(analysis) {
+            var html = '';
+            analysis.segments.forEach(function(seg, idx) {
+                var rowClass, badge, badgeText, navClass;
+                if (seg.type === 'shared') {
+                    rowClass = 'shared-row';
+                    badge = 'badge-shared';
+                    badgeText = '共路';
+                    navClass = 'shared';
+                } else if (seg.type === 'empty') {
+                    rowClass = 'empty-row';
+                    badge = 'badge-empty';
+                    badgeText = '空驶';
+                    navClass = '';
+                } else if (seg.type === 'main') {
+                    rowClass = '';
+                    badge = 'badge-main';
+                    badgeText = '主单';
+                    navClass = '';
+                } else {
+                    rowClass = '';
+                    badge = 'badge-sub';
+                    badgeText = '拼单';
+                    navClass = '';
+                }
+                html += '<div class="data-row ' + rowClass + '">'
+                    + '<span class="row-label">' + seg.from + ' → ' + seg.to
+                    + '<span class="badge ' + badge + '">' + badgeText + '</span>'
+                    + '<button class="navi-pill ' + navClass + '" onclick="navigateSegment(' + idx + ')">🧭 导航</button>'
+                    + '</span>'
+                    + '<span class="row-value">' + fmtDist(seg.distance) + ' km<small>' + fmtTime(seg.duration) + '</small></span>'
+                    + '</div>';
+            });
+            document.getElementById('segmentList').innerHTML = html;
+        }
+        async function calcRoute() {
+            var addrA = document.getElementById('addrA').value.trim();
+            var addrB = document.getElementById('addrB').value.trim();
+            var addrC = document.getElementById('addrC').value.trim();
+            var addrD = document.getElementById('addrD').value.trim();
+            if (!addrA || !addrB || !addrC || !addrD) {
+                showError('四个地址都要填写哦');
+                return;
+            }
+            hideError();
+            document.getElementById('resultBox').style.display = 'none';
+            var btn = document.getElementById('calcBtn');
+            btn.disabled = true;
+            btn.innerText = '规划中...';
+            document.getElementById('mapPanel').classList.remove('collapsed');
+            if (!mapReady) {
+                initMap();
+            }
+            try {
+                var addrMap = { A: addrA, B: addrB, C: addrC, D: addrD };
+                var tags = ['A', 'B', 'C', 'D'];
+                geoPoints = {};
+                for (var ti = 0; ti < tags.length; ti++) {
+                    var tag = tags[ti];
+                    setStatus('正在解析地址 ' + tag + '（' + (ti + 1) + '/4）...');
+                    geoPoints[tag] = await geocode(addrMap[tag], tag);
+                }
+                setStatus('正在计算6段路线矩阵（受控并发）...');
+                var pairs = [['A','B'],['A','C'],['A','D'],['B','C'],['B','D'],['C','D']];
+                var routeResults = new Array(pairs.length);
+                var nextIdx = 0;
+                async function routeWorker() {
+                    while (nextIdx < pairs.length) {
+                        var idx = nextIdx++;
+                        setStatus('正在计算路线（' + (idx + 1) + '/6）...');
+                        routeResults[idx] = await driving(geoPoints[pairs[idx][0]], geoPoints[pairs[idx][1]]);
+                    }
+                }
+                var workers = [];
+                for (var w = 0; w < 2; w++) workers.push(routeWorker());
+                await Promise.all(workers);
+                routeMatrix = {};
+                ['A','B','C','D'].forEach(function(k) { routeMatrix[k] = {}; });
+                pairs.forEach(function(pair, i) {
+                    routeMatrix[pair[0]][pair[1]] = routeResults[i];
+                });
+                optimalPath = findOptimalPath();
+                var analysis = analyzePath(optimalPath);
+                var totalDist = 0, totalTime = 0;
+                analysis.segments.forEach(function(seg) {
+                    totalDist += seg.distance;
+                    totalTime += seg.duration;
+                });
+                var ratio = totalDist > 0 ? (analysis.sharedDist / totalDist * 100) : 0;
+                renderRouteFlow(optimalPath, analysis);
+                document.getElementById('ovTotal').innerHTML = fmtDist(totalDist) + '<span class="stat-unit">km</span>';
+                document.getElementById('ovShared').innerHTML = fmtDist(analysis.sharedDist) + '<span class="stat-unit">km</span>';
+                document.getElementById('ovMain').innerHTML = fmtDist(analysis.mainDist) + '<span class="stat-unit">km</span>';
+                document.getElementById('ovSub').innerHTML = fmtDist(analysis.subDist) + '<span class="stat-unit">km</span>';
+                document.getElementById('sharedDist').innerText = fmtDist(analysis.sharedDist);
+                document.getElementById('ratioFill').style.width = ratio + '%';
+                document.getElementById('ratioText').innerText = '共路占总里程 ' + ratio.toFixed(1) + '%';
+                renderSegments(analysis);
+                document.getElementById('resTotal').innerHTML = fmtDist(totalDist) + ' km<small>' + fmtTime(totalTime) + '</small>';
+                drawRoute(analysis);
+                document.getElementById('resultBox').style.display = 'block';
+                setStatus('');
+                btn.innerText = '重新规划';
+                setTimeout(function() {
+                    document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 150);
+            } catch (e) {
+                showError(e.message);
+                setStatus('');
+                btn.innerText = '智能规划路线';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>
